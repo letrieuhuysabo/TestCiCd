@@ -1,0 +1,39 @@
+name: Chuỗi Quy Trình Tích Hợp Và Triển Khai (CI/CD)
+
+on:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  # GIAI ĐOẠN 1: CONTINUOUS INTEGRATION (CI) - KIỂM TRA LOGIC
+  chay-kiem-tra-ci:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Tải code từ GitHub về máy ảo
+      uses: actions/checkout@v4
+
+    - name: Cài đặt NodeJS
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20
+
+    - name: Thực thi bài test trong file html
+      # Sử dụng NodeJS để chạy trực tiếp đoạn script kiểm tra có trong file html
+      run: node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);"
+
+  # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - ĐƯA LÊN MẠNG
+  trien-khai-web-cd:
+    needs: chay-kiem-tra-ci # CRITICAL: Chỉ chạy khi giai đoạn CI ở trên báo XANH ✅
+    runs-on: ubuntu-latest
+    steps:
+    - name: Tải code từ GitHub về máy ảo
+      uses: actions/checkout@v4
+
+    - name: Đẩy giao diện lên GitHub Pages
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
