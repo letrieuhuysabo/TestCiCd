@@ -21,7 +21,7 @@ jobs:
         node-version: 20
 
     - name: Thực thi bài test trong file html
-      # Chạy trực tiếp đoạn script kiểm tra bằng Node có sẵn, không cần npm install
+      
       run: node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);"
 
   # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - ĐƯA LÊN MẠNG
@@ -36,4 +36,4 @@ jobs:
       uses: peaceiris/actions-gh-pages@v4
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./  # Sửa thành thư mục lỗi nếu muốn demo CD thất bại
+        publish_dir: ./
