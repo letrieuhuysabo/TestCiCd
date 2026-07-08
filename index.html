@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo Toàn Diện CI/CD với GitHub Actions</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f4f9; }
+        .container { padding: 30px; background: white; display: inline-block; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        h1 { color: #2ecc71; }
+        .version { font-weight: bold; color: #3498db; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CI/CD</h1>
+        <p>Trạng thái: <span style="color: green;">Đã qua vòng kiểm duyệt và Deploy thành công!</span></p>
+        
+    </div>
+
+    <script>
+        
+        function tinhTong(a, b) {
+            return a - b;
+        }
+
+        
+        let ketQua = tinhTong(1, 2);
+        if (ketQua !== 3) {
+            throw new Error("TEST FAILED: Hàm tính tổng đang hoạt động sai logic!");
+        } else {
+            console.log("TEST PASSED: Logic tính toán hoàn toàn chính xác.");
+        }
+    </script>
+</body>
+</html>
