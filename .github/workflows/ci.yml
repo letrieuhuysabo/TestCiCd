@@ -5,7 +5,9 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: write
+  contents: read
+  pages: write      # Cấp quyền ghi trực tiếp cho dịch vụ GitHub Pages
+  id-token: write
 
 jobs:
   # GIAI ĐOẠN 1: CONTINUOUS INTEGRATION (CI) - KIỂM TRA LOGIC
@@ -21,20 +23,20 @@ jobs:
         node-version: 20
 
     - name: Thực thi bài test trong file html
-      
       run: node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);"
 
-  # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - ĐƯA LÊN MẠNG
+  # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - ĐƯA TRỰC TIẾP LÊN PAGES
   trien-khai-web-cd:
-    needs: chay-kiem-tra-ci # Chỉ chạy khi vòng CI ở trên báo XANH ✅
+    needs: chay-kiem-tra-ci
     runs-on: ubuntu-latest
     steps:
-    - name: Tải code từ GitHub về máy ảo
+    - name: Tải code về máy ảo
       uses: actions/checkout@v4
 
-    - name: Đẩy giao diện lên GitHub Pages
-      uses: peaceiris/actions-gh-pages@v4
+    - name: Đóng gói thư mục (Upload Artifact)
+      uses: actions/upload-pages-artifact@v3
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./
-        publish_branch: gh-pages
+        path: '.'
+
+    - name: Triển khai trực tiếp lên GitHub Pages
+      uses: actions/deploy-pages@v4
