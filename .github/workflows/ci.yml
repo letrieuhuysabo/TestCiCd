@@ -4,9 +4,10 @@ on:
   push:
     branches: [ main ]
 
+# Cấp quyền cho phép GitHub Actions đóng gói và đưa sản phẩm lên dịch vụ GitHub Pages
 permissions:
   contents: read
-  pages: write      # Cấp quyền ghi trực tiếp cho dịch vụ GitHub Pages
+  pages: write      
   id-token: write
 
 jobs:
@@ -17,33 +18,37 @@ jobs:
     - name: Tải code từ GitHub về máy ảo
       uses: actions/checkout@v4
 
-    - name: Cài đặt NodeJS
+    - name: Cài đặt NodeJS trên máy ảo
       uses: actions/setup-node@v4
       with:
         node-version: 20
 
     - name: Thực thi bài test trong file html
+      # Sử dụng Node có sẵn để quét file index.html, kiểm tra hàm tính toán
       run: node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);"
 
-  # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - ĐƯA TRỰC TIẾP LÊN PAGES
+  # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - TRIỂN KHAI LÊN WEBSITE
   trien-khai-web-cd:
-    needs: chay-kiem-tra-ci
+    needs: chay-kiem-tra-ci # Chỉ khởi động khi giai đoạn CI ở trên báo XANH ✅
     runs-on: ubuntu-latest
     
-    # 🌟 THÊM 3 DÒNG NÀY VÀO ĐỂ FIX LỖI MISSING ENVIRONMENT 🌟
+    # Khai báo môi trường chính thức (Bắt buộc phải có để tránh lỗi 400/Missing Environment)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - name: Tải code về máy ảo
+    - name: Tải code từ GitHub về máy ảo
       uses: actions/checkout@v4
+
+    - name: Cấu hình hệ thống GitHub Pages
+      uses: actions/configure-pages@v5
 
     - name: Đóng gói thư mục (Upload Artifact)
       uses: actions/upload-pages-artifact@v3
       with:
-        path: '.' 
+        path: '.' # Đóng gói toàn bộ thư mục hiện tại (nơi chứa file index.html)
 
-    - name: Triển khai trực tiếp lên GitHub Pages
-      id: deployment # Thêm id để truyền biến link url lên trên môi trường
+    - name: Triển khai trực tiếp lên hệ thống GitHub Pages
+      id: deployment
       uses: actions/deploy-pages@v4
