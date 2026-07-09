@@ -42,7 +42,7 @@ jobs:
     - name: Đóng gói thư mục (Upload Artifact)
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './asds' 
+        path: '.' 
 
     - name: Triển khai trực tiếp lên GitHub Pages
       id: deployment # Thêm id để truyền biến link url lên trên môi trường
