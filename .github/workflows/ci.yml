@@ -29,6 +29,12 @@ jobs:
   trien-khai-web-cd:
     needs: chay-kiem-tra-ci
     runs-on: ubuntu-latest
+    
+    # 🌟 THÊM 3 DÒNG NÀY VÀO ĐỂ FIX LỖI MISSING ENVIRONMENT 🌟
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
     steps:
     - name: Tải code về máy ảo
       uses: actions/checkout@v4
@@ -36,7 +42,8 @@ jobs:
     - name: Đóng gói thư mục (Upload Artifact)
       uses: actions/upload-pages-artifact@v3
       with:
-        path: '.'
+        path: '.' 
 
     - name: Triển khai trực tiếp lên GitHub Pages
+      id: deployment # Thêm id để truyền biến link url lên trên môi trường
       uses: actions/deploy-pages@v4
