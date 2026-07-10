@@ -47,7 +47,7 @@ jobs:
     - name: Đóng gói thư mục (Upload Artifact)
       uses: actions/upload-pages-artifact@v3
       with:
-        path: './asda' # Đóng gói toàn bộ thư mục hiện tại (nơi chứa file index.html)
+        path: '.' # Đóng gói toàn bộ thư mục hiện tại (nơi chứa file index.html)
 
     - name: Triển khai trực tiếp lên hệ thống GitHub Pages
       id: deployment
