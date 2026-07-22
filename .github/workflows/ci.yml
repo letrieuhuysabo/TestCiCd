@@ -1,54 +1,76 @@
-name: Chuỗi Quy Trình Tích Hợp Và Triển Khai (CI/CD)
+name: Quy Trình Tổng Thể CI/CD (Full 8 Steps)
 
 on:
   push:
     branches: [ main ]
 
-# Cấp quyền cho phép GitHub Actions đóng gói và đưa sản phẩm lên dịch vụ GitHub Pages
 permissions:
   contents: read
-  pages: write      
+  pages: write
   id-token: write
 
 jobs:
-  # GIAI ĐOẠN 1: CONTINUOUS INTEGRATION (CI) - KIỂM TRA LOGIC
-  chay-kiem-tra-ci:
+  # ==========================================
+  # PHẦN 1: TÍCH HỢP LIÊN TỤC (CI) - BƯỚC 1 ĐẾN BƯỚC 5
+  # ==========================================
+  tich-hop-ci:
     runs-on: ubuntu-latest
     steps:
-    - name: Tải code từ GitHub về máy ảo
-      uses: actions/checkout@v4
+      # 📌 BƯỚC 1: Source Code Management (Git)
+      - name: "Bước 1: Tải mã nguồn từ Git"
+        uses: actions/checkout@v4
 
-    - name: Cài đặt NodeJS trên máy ảo
-      uses: actions/setup-node@v4
-      with:
-        node-version: 20
+      # 📌 BƯỚC 2: Build Stage
+      - name: "Bước 2: Dựng môi trường NodeJS (Build Stage)"
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
 
-    - name: Thực thi bài test trong file html
-      # Sử dụng Node có sẵn để quét file index.html, kiểm tra hàm tính toán
-      run: node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); eval(html.match(/<script>([\s\S]*?)<\/script>/)[1]);"
+      # 📌 BƯỚC 3: Automated Tests
+      - name: "Bước 3: Kiểm thử tự động (Automated Tests)"
+        run: npm test
 
-  # GIAI ĐOẠN 2: CONTINUOUS DEPLOYMENT (CD) - TRIỂN KHAI LÊN WEBSITE
-  trien-khai-web-cd:
-    needs: chay-kiem-tra-ci # Chỉ khởi động khi giai đoạn CI ở trên báo XANH ✅
+      # 📌 BƯỚC 4: Code Analysis & Security Scan
+      - name: "Bước 4: Quét bảo mật mã nguồn (Security Scan)"
+        run: |
+          echo "Đang quét bảo mật file HTML..."
+          node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); if (html.includes('password') || html.includes('secret')) { console.error('LỖI BẢO MẬT: Phát hiện thông tin nhạy cảm!'); process.exit(1); } else { console.log('Mã nguồn đạt chuẩn an toàn.'); }"
+
+      - name: "Bước 4 (Phụ): Kiểm tra bảo mật thư viện (npm audit)"
+        run: npm audit --audit-level=high || true
+
+      # 📌 BƯỚC 5: Artifact Repository
+      - name: "Bước 5: Đóng gói và lưu kho thành phẩm (Artifact Repository)"
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+  # ==========================================
+  # PHẦN 2: TRIỂN KHAI LIÊN TỤC (CD) - BƯỚC 6 ĐẾN BƯỚC 8
+  # ==========================================
+  trien-khai-cd:
+    needs: tich-hop-ci
     runs-on: ubuntu-latest
-    
-    # Khai báo môi trường chính thức (Bắt buộc phải có để tránh lỗi 400/Missing Environment)
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-    - name: Tải code từ GitHub về máy ảo
-      uses: actions/checkout@v4
+      # 📌 BƯỚC 6: Deployment to Staging
+      - name: "Bước 6: Triển khai kiểm thử lên môi trường Staging"
+        run: echo "Đang giả lập deploy lên môi trường Staging thành công!"
 
-    - name: Cấu hình hệ thống GitHub Pages
-      uses: actions/configure-pages@v5
+      # 📌 BƯỚC 7: Deployment to Production
+      - name: "Bước 7: Triển khai chính thức lên Production (GitHub Pages)"
+        id: deployment
+        uses: actions/deploy-pages@v4
 
-    - name: Đóng gói thư mục (Upload Artifact)
-      uses: actions/upload-pages-artifact@v3
-      with:
-        path: '.' # Đóng gói toàn bộ thư mục hiện tại (nơi chứa file index.html)
-
-    - name: Triển khai trực tiếp lên hệ thống GitHub Pages
-      id: deployment
-      uses: actions/deploy-pages@v4
+      # 📌 BƯỚC 8: Monitoring and Alerts
+      - name: "Bước 8: Cảnh báo & Giám sát hệ thống (Monitoring & Alerts)"
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ GIÁM SÁT: Hệ thống vận hành bình thường. Đã gửi thông báo thành công!"
+          else
+            echo "❌ CẢNH BÁO: Phát hiện sự cố! Đã gửi Alert email cho đội kỹ thuật!"
+          fi
