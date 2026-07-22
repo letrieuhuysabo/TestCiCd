@@ -36,7 +36,7 @@ jobs:
           echo "Đang quét bảo mật file HTML..."
           node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); if (html.includes('password') || html.includes('secret')) { console.error('LỖI BẢO MẬT: Phát hiện thông tin nhạy cảm!'); process.exit(1); } else { console.log('Mã nguồn đạt chuẩn an toàn.'); }"
 
-      - name: "Bước 4 (Phụ): Kiểm tra bảo mật thư viện (npm audit)"
+      - name: "Bước 4: Kiểm tra bảo mật thư viện (npm audit)"
         run: npm audit --audit-level=high || true
 
       # 📌 BƯỚC 5: Artifact Repository
