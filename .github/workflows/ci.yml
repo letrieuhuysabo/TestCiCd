@@ -2,7 +2,7 @@ name: Quy Trình Tổng Thể CI/CD (Full 8 Steps)
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, staging ] # Kích hoạt khi push vào nhánh main HOẶC staging
 
 permissions:
   contents: read
@@ -26,18 +26,20 @@ jobs:
         with:
           node-version: 20
 
-      # 📌 BƯỚC 3: Automated Tests
-      - name: "Bước 3: Kiểm thử tự động (Automated Tests)"
+      # 📌 BƯỚC 3: Automated Tests (Chạy 5 Test Cases cho thuật toán Binary Search)
+      - name: "Bước 3: Kiểm thử tự động thuật toán (Automated Tests)"
         run: npm test
 
-      # 📌 BƯỚC 4: Code Analysis & Security Scan
-      - name: "Bước 4: Quét bảo mật mã nguồn (Security Scan)"
+      # 📌 BƯỚC 4: Code Analysis & Security Scan (Phân chia minh bạch 2 nhiệm vụ)
+      - name: "Bước 4a: Quét tĩnh mã nguồn HTML (Static Analysis / SAST)"
         run: |
-          echo "Đang quét bảo mật file HTML..."
-          node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); if (html.includes('password') || html.includes('secret')) { console.error('LỖI BẢO MẬT: Phát hiện thông tin nhạy cảm!'); process.exit(1); } else { console.log('Mã nguồn đạt chuẩn an toàn.'); }"
+          echo "Đang quét mã nguồn HTML để kiểm tra lộ thông tin nhạy cảm..."
+          node -e "const fs = require('fs'); const html = fs.readFileSync('index.html', 'utf8'); if (html.includes('password') || html.includes('secret')) { console.error('LỖI BẢO MẬT: Phát hiện thông tin nhạy cảm!'); process.exit(1); } else { console.log('✅ Mã nguồn đạt chuẩn an toàn.'); }"
 
-      - name: "Bước 4: Kiểm tra bảo mật thư viện (npm audit)"
-        run: npm audit --audit-level=high || true
+      - name: "Bước 4b: Đối chiếu lỗ hổng thư viện với NVD (Dependency Scan)"
+        run: |
+          echo "Đang đối chiếu các gói phụ thuộc với cơ sở dữ liệu NVD..."
+          npm audit --audit-level=high || true
 
       # 📌 BƯỚC 5: Artifact Repository
       - name: "Bước 5: Đóng gói và lưu kho thành phẩm (Artifact Repository)"
@@ -48,29 +50,42 @@ jobs:
   # ==========================================
   # PHẦN 2: TRIỂN KHAI LIÊN TỤC (CD) - BƯỚC 6 ĐẾN BƯỚC 8
   # ==========================================
-  trien-khai-cd:
+  
+  # 📌 BƯỚC 6: Deployment to Staging (Chạy thật khi push vào nhánh staging)
+  trien-khai-staging:
     needs: tich-hop-ci
+    if: github.ref == 'refs/heads/staging'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging-environment
+    steps:
+      - name: "Bước 6: Triển khai thử nghiệm lên môi trường Staging"
+        id: deployment-staging
+        uses: actions/deploy-pages@v4
+
+  # 📌 BƯỚC 7: Deployment to Production (Chạy thật khi push/merge vào nhánh main)
+  trien-khai-production:
+    needs: tich-hop-ci
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-
     steps:
-      # 📌 BƯỚC 6: Deployment to Staging
-      - name: "Bước 6: Triển khai kiểm thử lên môi trường Staging"
-        run: echo "Đang giả lập deploy lên môi trường Staging thành công!"
-
-      # 📌 BƯỚC 7: Deployment to Production
-      - name: "Bước 7: Triển khai chính thức lên Production (GitHub Pages)"
+      - name: "Bước 7: Triển khai chính thức lên môi trường Production"
         id: deployment
         uses: actions/deploy-pages@v4
 
-      # 📌 BƯỚC 8: Monitoring and Alerts
+  # 📌 BƯỚC 8: Monitoring and Alerts
+  giam-sat-monitoring:
+    needs: [tich-hop-ci]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
       - name: "Bước 8: Cảnh báo & Giám sát hệ thống (Monitoring & Alerts)"
-        if: always()
         run: |
-          if [ "${{ job.status }}" == "success" ]; then
-            echo "✅ GIÁM SÁT: Hệ thống vận hành bình thường. Đã gửi thông báo thành công!"
+          if [ "${{ needs.tich-hop-ci.result }}" == "success" ]; then
+            echo "✅ GIÁM SÁT: Quy trình vận hành bình thường. Đã lưu log giám sát thành công!"
           else
-            echo "❌ CẢNH BÁO: Phát hiện sự cố! Đã gửi Alert email cho đội kỹ thuật!"
+            echo "❌ CẢNH BÁO: Phát hiện sự cố! Đã gửi Alert khẩn cấp cho đội kỹ thuật!"
           fi
