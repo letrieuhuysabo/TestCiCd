@@ -25,6 +25,9 @@
                 
                 let mid = Math.floor((left + right) / 2);
                 mid = -1;
+                if (arr[mid] == undefined){
+                    throw new Error("Undefined");
+                }
                 if (arr[mid] === target) {
                     return mid;
                 }
